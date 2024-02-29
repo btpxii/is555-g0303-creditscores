@@ -6,6 +6,8 @@ data_raw <- read_csv('https://www.dropbox.com/scl/fi/f2qvn6c59j3l3b81bthzk/01_tr
 
 data_raw
 
+
+# BY JD The following code walks through the process of identifying NA values, analyzing numeric variables for outliers, and analyzing one categorical variable. 
 ## find na values and their distribution, this is better than a regular count of na values
 # because it gives a more standardized measure of the extent of missingness within each variable
 # 
@@ -100,6 +102,117 @@ MB_plot
 ggplot(data_raw, aes(x = Payment_Behaviour)) +
   geom_bar(fill = "skyblue", color = "black") +
   labs(x = "Behaviors", y = "Count", title = "Distribution of Payment Behavior")
+
+
+
+#BY BRAYDEN: Code that explores the Credit_Score variable
+
+data_raw %>% summary()
+data_raw %>% group_by(Customer_ID) %>% summarise(count = n()) %>% arrange(desc(count))
+
+# dependent variable EDA
+data_raw %>% 
+  group_by(Credit_Score) %>% 
+  summarize("Counts" = n())
+
+data_raw$Credit_Score %>% summary()
+
+sum(is.na(data_raw$Credit_Score))
+
+month_names <- c("January", "February", "March", "April", "May", "June", 
+                 "July", "August", "September", "October", "November", "December")
+
+data_raw$Month_Number <- match(data_raw$Month, month_names)
+
+uniq_cs_cust <- data_raw %>% 
+  group_by(Customer_ID, Credit_Score) %>% 
+  summarise(Count = n())
+uniq_cs_cust
+
+cs_change_cust <- data_raw %>% 
+  select(Customer_ID, Month_Number, Credit_Score) %>% 
+  group_by(Customer_ID, Credit_Score) %>% 
+  slice(1) %>% 
+  ungroup() %>% 
+  arrange(Customer_ID, Month_Number) %>% 
+  group_by(Customer_ID) %>% 
+  mutate(Change = paste0(Credit_Score, "_", lead(Credit_Score))) %>% 
+  filter(!grepl("_NA$", Change))
+cs_change_cust
+
+cx_three_cs <- data_grouped_2 %>% filter(Count_uniq == 3) %>% select(Customer_ID, Credit_Score)
+cx_three_cs
+
+# credit score labels, duplicates included, all months total
+data_raw %>% 
+  ggplot(mapping = aes(x = Credit_Score, fill=Credit_Score)) +
+  geom_bar() +
+  labs(title = "Count of Credit Score Labels",
+       x = "Credit Score Label",
+       y = "Count")
+
+# credit score labels with duplicates per customer removed
+uniq_cs_cust %>% 
+  ggplot(mapping = aes(x = Credit_Score, fill=Credit_Score)) +
+  geom_bar() +
+  labs(title = "Count of Unique Credit Score Labels by Customer",
+       x = "Credit Score Label",
+       y = "Count")
+
+# score changes
+cs_change_cust %>% 
+  ggplot(mapping = aes(x = Change, fill=Change)) +
+  geom_bar() +
+  labs(title = "Count of score change events for individual customers",
+       x = "Change event",
+       y = "Count")
+
+#BY SELASSIE: 
+# This tibble creates a new variable 'types_loan' by extracting distinct values of 'Type_of_Loan' from the 'data_raw' dataset
+# then grouping the data by these loan types. Subsequently, a new variable 'unique_loans' is added to each group
+#  representing the count of occurrences of each distinct loan type. The result is a dataset that shows each unique loan type along
+# with its count withing the data raw dataset.
+types_loan <- data_raw %>% 
+  distinct(Type_of_Loan) %>% 
+  group_by(Type_of_Loan) %>% 
+  mutate(unique_loans = n())
+
+
+
+
+# This table classifies the columns in our dataset as "Categorical," "Continuous," or "Other" based on their types. 
+# The categorization is determined by checking if the column 'x' is either a factor or a character using the functions 
+# is.factor(x) and is.character(x). If the column falls under either of these categories, it is labeled as 'Categorical'; 
+# otherwise, it is classified as 'Continuous.' However, this process revealed potential issues in our dataset, such as the 
+# 'Num_of_Delayed_Payment' column being incorrectly identified as 'Categorical' when it should be considered a 'Continuous' variable.
+
+column_types <- sapply(data_raw, function(x) {
+  if (is.factor(x) || is.character(x)) {
+    return("Categorical")
+  } else if (is.numeric(x)) {
+    return("Continuous")
+  } else {
+    return("Other")
+  }
+})
+
+# Display the summary
+summary_df <- data.frame(Column = names(data_raw), Type = column_types)
+print(summary_df)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
