@@ -106,7 +106,6 @@ ggplot(data_raw, aes(x = Payment_Behaviour)) +
 
 
 #BY BRAYDEN: Code that explores the Credit_Score variable
-
 data_raw %>% summary()
 data_raw %>% group_by(Customer_ID) %>% summarise(count = n()) %>% arrange(desc(count))
 
@@ -128,6 +127,8 @@ uniq_cs_cust <- data_raw %>%
   group_by(Customer_ID, Credit_Score) %>% 
   summarise(Count = n())
 uniq_cs_cust
+
+num_cs_ratings <- uniq_cs_cust %>% group_by(Customer_ID) %>% summarise(rating_count = n())
 
 cs_change_cust <- data_raw %>% 
   select(Customer_ID, Month_Number, Credit_Score) %>% 
@@ -151,6 +152,14 @@ data_raw %>%
        x = "Credit Score Label",
        y = "Count")
 
+# number of credit score ratings per customer
+num_cs_ratings %>% 
+  ggplot(mapping = aes(x = rating_count)) +
+  geom_bar(fill="blue") +
+  labs(title = "Count of credit score ratings per customer",
+       x = "Rating count",
+       y = "Count of occurrences")
+
 # credit score labels with duplicates per customer removed
 uniq_cs_cust %>% 
   ggplot(mapping = aes(x = Credit_Score, fill=Credit_Score)) +
@@ -166,7 +175,6 @@ cs_change_cust %>%
   labs(title = "Count of score change events for individual customers",
        x = "Change event",
        y = "Count")
-
 #BY SELASSIE: 
 # This tibble creates a new variable 'types_loan' by extracting distinct values of 'Type_of_Loan' from the 'data_raw' dataset
 # then grouping the data by these loan types. Subsequently, a new variable 'unique_loans' is added to each group
